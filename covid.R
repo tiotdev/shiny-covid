@@ -49,6 +49,7 @@ server <- function(input, output, session, ...) {
     gefilterteDaten <- data.frame(append(gefilterteFallzahlen, gefilterteEinwohner))
     title <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
+    # Concatenate Strings https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
     diagrammTitel <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
       title <- "Faelle pro 100.000 Einwohner"
