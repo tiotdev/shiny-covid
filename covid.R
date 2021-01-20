@@ -33,8 +33,7 @@ ui <- fluidPage(
               timeFormat="%Y-%m-%d"),
   # https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
-               c("Absolut" = "absolut",
-                 "Relativ" = "relativ")),
+               c("Relativ" = "relativ","Absolut" = "absolut")),
   plotlyOutput(outputId = "p")
 )
 
