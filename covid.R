@@ -29,7 +29,7 @@ ui <- fluidPage(
               "Zeitraum:",
               min = as.Date("2020-01-02","%Y-%m-%d"),
               max = as.Date("2021-01-19","%Y-%m-%d"),
-              value=c(as.Date("2020-01-01"),as.Date("2020-12-31")),
+              value=c(as.Date("2020-01-01"),as.Date("2021-01-19")),
               timeFormat="%Y-%m-%d"),
   # https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
@@ -47,16 +47,14 @@ server <- function(input, output, session, ...) {
     gefilterteFallzahlen <- filter(bl, Bundesland %in% input$bl) # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     gefilterteEinwohner <- filter(einwohnerzahlen, Bundesland %in% input$bl)
     gefilterteDaten <- data.frame(append(gefilterteFallzahlen, gefilterteEinwohner))
-    print(gefilterteDaten)
     title <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
+    diagrammTitel <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
       title <- "Faelle pro 100.000 Einwohner"
-      print(gefilterteDaten$x)
-      print(gefilterteDaten$Einwohner)
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
     }
-    layout(plot_ly(gefilterteDaten,x=gefilterteDaten$Bundesland,y=fallZahlen), title="Covid Neuerkrankungen nach Bundesland",
+    layout(plot_ly(gefilterteDaten,x=gefilterteDaten$Bundesland,y=fallZahlen), title=diagrammTitel,
            xaxis=list(title = "Bundesland"),yaxis=list(title = title))
   })
 }
