@@ -1,3 +1,4 @@
+library(plotly)
 library(shiny)
 
 # Datenquelle: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum
@@ -15,6 +16,9 @@ laenderdaten <- aggregate(originalData$AnzahlFall, list(Bundesland = originalDat
 laenderauswahl <- laenderdaten[1]
 
 ui <- fluidPage(
+  # Layout mit Sidebar: https://github.com/rstudio-education/shiny.rstudio.com-tutorial/blob/master/part-1-code/app.R
+  headerPanel('Covid Visualisierung'),
+  sidebarPanel(
   # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
   selectizeInput(
     inputId = "bl", 
@@ -34,7 +38,10 @@ ui <- fluidPage(
   # https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
                c("Relativ" = "relativ","Absolut" = "absolut")),
-  plotlyOutput(outputId = "p")
+  ),
+  mainPanel(
+    plotlyOutput(outputId = "p")
+  )
 )
 
 server <- function(input, output, session, ...) {
