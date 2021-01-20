@@ -1,5 +1,6 @@
 library(plotly)
 library(shiny)
+library(plyr)
 
 # Datenquelle: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum
 rkiDaten <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
@@ -77,13 +78,21 @@ server <- function(input, output, session, ...) {
     # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
     # Aggregieren nach gewaehlten Bundeslaendern
-    gefilterteDaten <- filter(faelleImZeitraum, Bundesland %in% input$bl) 
+    gefilterteFallzahlen <- filter(faelleImZeitraum, Bundesland %in% input$bl) 
+    gefilterteEinwohner <- filter(einwohnerZahlen, Bundesland %in% input$bl)
+    # https://stackoverflow.com/questions/14102498/merge-dataframes-different-lengths
+    gefilterteEinwohner$variable <- rownames(gefilterteEinwohner)
+    gefilterteDaten <- merge(gefilterteFallzahlen, gefilterteEinwohner)
     if (identical(input$bl, NULL)) {
-      gefilterteDaten <- faelleImZeitraum
+      einwohnerZahlen$variable <- rownames(einwohnerZahlen)
+      gefilterteDaten <- merge(faelleImZeitraum, einwohnerZahlen)
     }
-    # TODO: Relativ
+    fallZahlen <- gefilterteDaten$x
+    if(input$datentyp == "relativ") {
+      fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
+    }
     # Quelle: https://plotly.com/r/line-charts/ Density Plot
-    fig <- plot_ly(gefilterteDaten, x=gefilterteDaten$Meldedatum,y=gefilterteDaten$x, color = gefilterteDaten$Bundesland) 
+    fig <- plot_ly(gefilterteDaten, x=gefilterteDaten$Meldedatum,y=fallZahlen, color = gefilterteDaten$Bundesland) 
     fig <- fig %>% add_lines()
     
     fig
