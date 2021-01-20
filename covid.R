@@ -40,12 +40,13 @@ ui <- fluidPage(
                c("Relativ" = "relativ","Absolut" = "absolut")),
   ),
   mainPanel(
-    plotlyOutput(outputId = "p")
+    plotlyOutput(outputId = "balkenDiagramm"),
+    plotlyOutput(outputId = "linienDiagramm")
   )
 )
 
 server <- function(input, output, session, ...) {
-  output$p <- renderPlotly({
+  output$balkenDiagramm <- renderPlotly({
     # Nach gewaehltem Zeitraum filtern
     # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
@@ -70,6 +71,22 @@ server <- function(input, output, session, ...) {
     # Plotly - siehe 1. Abgabe
     layout(plot_ly(gefilterteDaten,x=gefilterteDaten$Bundesland,y=fallZahlen), title=diagrammTitle,
            xaxis=list(title = "Bundesland"),yaxis=list(title = yTitle))
+  })
+  output$linienDiagramm <- renderPlotly({
+    # Nach gewaehltem Zeitraum filtern
+    # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
+    faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
+    # Aggregieren nach gewaehlten Bundeslaendern
+    gefilterteDaten <- filter(faelleImZeitraum, Bundesland %in% input$bl) 
+    if (identical(input$bl, NULL)) {
+      gefilterteDaten <- faelleImZeitraum
+    }
+    # TODO: Relativ
+    # Quelle: https://plotly.com/r/line-charts/ Density Plot
+    fig <- plot_ly(gefilterteDaten, x=gefilterteDaten$Meldedatum,y=gefilterteDaten$x, color = gefilterteDaten$Bundesland) 
+    fig <- fig %>% add_lines()
+    
+    fig
   })
 }
 
