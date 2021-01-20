@@ -1,6 +1,6 @@
 library(shiny)
 
-sourcedata <- read.csv("./data/RKI_COVID19-20201102.csv", stringsAsFactors = FALSE)
+sourcedata <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
 # https://stackoverflow.com/questions/51867390/r-programming-filtering-data-frame-with-date-column
 
 laenderdaten <- aggregate(sourcedata$AnzahlFall, list(Bundesland = sourcedata$Bundesland), sum)
@@ -20,8 +20,8 @@ ui <- fluidPage(
   # https://shiny.rstudio.com/articles/sliders.html
   sliderInput("zeitraum",
               "Zeitraum:",
-              min = as.Date("2020-01-01","%Y-%m-%d"),
-              max = as.Date("2020-12-31","%Y-%m-%d"),
+              min = as.Date("2020-01-02","%Y-%m-%d"),
+              max = as.Date("2021-01-19","%Y-%m-%d"),
               value=c(as.Date("2020-01-01"),as.Date("2020-12-31")),
               timeFormat="%Y-%m-%d"),
   plotlyOutput(outputId = "p")
