@@ -64,7 +64,7 @@ server <- function(input, output, session, ...) {
     yTitle <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
     # Concatenate Strings Quelle: https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
-    diagrammTitle <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
+    diagrammTitle <- paste("Kumulierte Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
       yTitle <- "Fälle pro 100.000 Einwohner"
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
@@ -88,14 +88,19 @@ server <- function(input, output, session, ...) {
       gefilterteDaten <- merge(faelleImZeitraum, einwohnerZahlen)
     }
     fallZahlen <- gefilterteDaten$x
+    yTitle <- "Neuerkrankungen"
+    diagrammTitle <- paste("Verlauf täglicher Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
+      yTitle <- "Neuerkrankungen pro 100.000 Einwohner"
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
     }
+    
     # Quelle: https://plotly.com/r/line-charts/ Density Plot
     fig <- plot_ly(gefilterteDaten, x=gefilterteDaten$Meldedatum,y=fallZahlen, color = gefilterteDaten$Bundesland) 
     fig <- fig %>% add_lines()
     
-    fig
+    layout(fig, title=diagrammTitle,
+           xaxis=list(title = "Datum"),yaxis=list(title = yTitle))
   })
 }
 
