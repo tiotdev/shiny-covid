@@ -1,13 +1,16 @@
 library(shiny)
 
 # Datenquelle: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum
-sourcedata <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
+originalData <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
 # stringsAsFactors zum Filtern nach Meldedatum https://stackoverflow.com/questions/51867390/r-programming-filtering-data-frame-with-date-column
 
 einwohnerzahlen <- read.csv("./data/Einwohnerzahlen.csv")
 # Quellehttps://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-nichtdeutsch-laender.html
 
-laenderdaten <- aggregate(sourcedata$AnzahlFall, list(Bundesland = sourcedata$Bundesland), sum)
+# Daten aggegieren, um spaetere Bearbeitung zu beschleunigen (wir brauchen keine Daten zu Landkreisen/Altersgruppe/..)
+sourcedata <- aggregate(originalData$AnzahlFall, list(Meldedatum = originalData$Meldedatum, Bundesland = originalData$Bundesland), sum)
+
+laenderdaten <- aggregate(originalData$AnzahlFall, list(Bundesland = originalData$Bundesland), sum)
 
 laenderauswahl <- laenderdaten[1]
 
@@ -41,7 +44,7 @@ server <- function(input, output, session, ...) {
     req(input$bl)
     if (identical(input$bl, "")) return(NULL)
     datenrange <- filter(sourcedata, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
-    bl <- aggregate(datenrange$AnzahlFall, list(Bundesland = datenrange$Bundesland), sum)
+    bl <- aggregate(datenrange$x, list(Bundesland = datenrange$Bundesland), sum)
     gefilterteFallzahlen <- filter(bl, Bundesland %in% input$bl) # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     gefilterteEinwohner <- filter(einwohnerzahlen, Bundesland %in% input$bl)
     gefilterteDaten <- data.frame(append(gefilterteFallzahlen, gefilterteEinwohner))
