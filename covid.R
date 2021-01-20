@@ -2,40 +2,40 @@ library(plotly)
 library(shiny)
 
 # Datenquelle: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum
-originalData <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
+rkiDaten <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
 # stringsAsFactors zum Filtern nach Meldedatum https://stackoverflow.com/questions/51867390/r-programming-filtering-data-frame-with-date-column
 
-einwohnerzahlen <- read.csv("./data/Einwohnerzahlen.csv")
-# Quellehttps://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-nichtdeutsch-laender.html
+einwohnerZahlen <- read.csv("./data/Einwohnerzahlen.csv")
+# Quelle https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-nichtdeutsch-laender.html
 
 # Daten aggegieren, um spaetere Bearbeitung zu beschleunigen (wir brauchen keine Daten zu Landkreisen/Altersgruppe/..)
-sourcedata <- aggregate(originalData$AnzahlFall, list(Meldedatum = originalData$Meldedatum, Bundesland = originalData$Bundesland), sum)
+faelleNachDatumUndLand <- aggregate(rkiDaten$AnzahlFall, list(Meldedatum = rkiDaten$Meldedatum, Bundesland = rkiDaten$Bundesland), sum)
 
-laenderdaten <- aggregate(originalData$AnzahlFall, list(Bundesland = originalData$Bundesland), sum)
-
-laenderauswahl <- laenderdaten[1]
+# Aggregieren fuer den Dropdown zum Auswaehlen der Bundeslaender
+bundesLaender <- aggregate(rkiDaten$AnzahlFall, list(Bundesland = rkiDaten$Bundesland), sum)
+laenderAuswahl <- bundesLaender[1]
 
 ui <- fluidPage(
   # Layout mit Sidebar: https://github.com/rstudio-education/shiny.rstudio.com-tutorial/blob/master/part-1-code/app.R
-  headerPanel('Covid Visualisierung'),
+  headerPanel('Covid Fälle nach Bundesland'),
   sidebarPanel(
-  # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
-  selectizeInput(
-    inputId = "bl", 
-    label = NULL,
+  # Dropdown zum Ausawehlen der Bundeslaender. Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
+  selectizeInput("bl",
+                 "Bundesländer:",
     # placeholder is enabled when 1st choice is an empty string
-    choices = c("Bundeslaender hier auswaehlen" = "", laenderauswahl), 
+    choices = c("Bundeslaender hier auswaehlen" = "", laenderAuswahl), 
     multiple = TRUE
   ),
-  # https://stackoverflow.com/questions/40908808/how-to-sliderinput-for-dates
-  # https://shiny.rstudio.com/articles/sliders.html
+  # Slider zur Auswahl des Zeitraums
+  # Quelle: https://shiny.rstudio.com/articles/sliders.html
+  # Quelle: https://stackoverflow.com/questions/40908808/how-to-sliderinput-for-dates
   sliderInput("zeitraum",
               "Zeitraum:",
               min = as.Date("2020-01-02","%Y-%m-%d"),
               max = as.Date("2021-01-19","%Y-%m-%d"),
               value=c(as.Date("2020-01-01"),as.Date("2021-01-19")),
               timeFormat="%Y-%m-%d"),
-  # https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
+  # Radio Buttons zur Auswahl von Datentyp: https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
                c("Relativ" = "relativ","Absolut" = "absolut")),
   ),
@@ -49,21 +49,26 @@ server <- function(input, output, session, ...) {
     # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     req(input$bl)
     if (identical(input$bl, "")) return(NULL)
-    datenrange <- filter(sourcedata, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
-    bl <- aggregate(datenrange$x, list(Bundesland = datenrange$Bundesland), sum)
-    gefilterteFallzahlen <- filter(bl, Bundesland %in% input$bl) # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
-    gefilterteEinwohner <- filter(einwohnerzahlen, Bundesland %in% input$bl)
+    # Nach gewaehltem Zeitraum filtern
+    # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
+    faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
+    # Aggregieren nach gewaehlten Bundeslaendern
+    bl <- aggregate(faelleImZeitraum$x, list(Bundesland = faelleImZeitraum$Bundesland), sum)
+    # Einwohnerzahlen nach Bundesland zu Datensatz hinzufuegen
+    gefilterteFallzahlen <- filter(bl, Bundesland %in% input$bl) 
+    gefilterteEinwohner <- filter(einwohnerZahlen, Bundesland %in% input$bl)
     gefilterteDaten <- data.frame(append(gefilterteFallzahlen, gefilterteEinwohner))
-    title <- "Gesamtanzahl der Fälle"
+    yTitle <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
-    # Concatenate Strings https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
-    diagrammTitel <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
+    # Concatenate Strings Quelle: https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
+    diagrammTitle <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
-      title <- "Faelle pro 100.000 Einwohner"
+      yTitle <- "Faelle pro 100.000 Einwohner"
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
     }
-    layout(plot_ly(gefilterteDaten,x=gefilterteDaten$Bundesland,y=fallZahlen), title=diagrammTitel,
-           xaxis=list(title = "Bundesland"),yaxis=list(title = title))
+    # Plotly - siehe 1. Abgabe
+    layout(plot_ly(gefilterteDaten,x=gefilterteDaten$Bundesland,y=fallZahlen), title=diagrammTitle,
+           xaxis=list(title = "Bundesland"),yaxis=list(title = yTitle))
   })
 }
 
