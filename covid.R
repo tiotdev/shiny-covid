@@ -23,7 +23,7 @@ ui <- fluidPage(
   selectizeInput("bl",
                  "Bundesländer:",
     # placeholder is enabled when 1st choice is an empty string
-    choices = c("Bundeslaender hier auswaehlen" = "", laenderAuswahl), 
+    choices = c("Bundesländer hier auswaehlen" = "", laenderAuswahl), 
     multiple = TRUE
   ),
   # Slider zur Auswahl des Zeitraums
@@ -46,9 +46,6 @@ ui <- fluidPage(
 
 server <- function(input, output, session, ...) {
   output$p <- renderPlotly({
-    # Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
-    req(input$bl)
-    if (identical(input$bl, "")) return(NULL)
     # Nach gewaehltem Zeitraum filtern
     # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
@@ -58,12 +55,16 @@ server <- function(input, output, session, ...) {
     gefilterteFallzahlen <- filter(bl, Bundesland %in% input$bl) 
     gefilterteEinwohner <- filter(einwohnerZahlen, Bundesland %in% input$bl)
     gefilterteDaten <- data.frame(append(gefilterteFallzahlen, gefilterteEinwohner))
+    # Falls nicht nach Bundesland gefiltert, zeige alle Bundeslaender
+    if (identical(input$bl, NULL)) {
+      gefilterteDaten <- data.frame(append(bl, einwohnerZahlen))
+    }
     yTitle <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
     # Concatenate Strings Quelle: https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
     diagrammTitle <- paste("Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
-      yTitle <- "Faelle pro 100.000 Einwohner"
+      yTitle <- "Fälle pro 100.000 Einwohner"
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
     }
     # Plotly - siehe 1. Abgabe
