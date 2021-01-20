@@ -23,7 +23,7 @@ ui <- fluidPage(
   selectizeInput("bl",
                  "Bundesländer:",
     # placeholder is enabled when 1st choice is an empty string
-    choices = c("Bundesländer hier auswaehlen" = "", laenderAuswahl), 
+    choices = c("Nach Bundesland filtern" = "", laenderAuswahl), 
     multiple = TRUE
   ),
   # Slider zur Auswahl des Zeitraums
