@@ -38,6 +38,15 @@ ui <- fluidPage(
   # Radio Buttons zur Auswahl von Datentyp: https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
                c("Relativ" = "relativ","Absolut" = "absolut")),
+  h4("Quellen"), # HTML tags in shiny: https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/
+  h5("Datenquellen"),
+  a("Daten des RKI zu Covid-Neuerkrankungen (Stand 21.01.2021)", href="https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum"), # HTML link in shiny: https://stackoverflow.com/questions/42047422/create-url-hyperlink-in-r-shiny
+  br(),
+  a("Bevölkerung der Bundesländer vom statistischen Bundesamt (Stand 31.12.2019) ", href="https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-nichtdeutsch-laender.html"), 
+  h5("Verwendete R-Bibliotheken"),
+  a("Plotly", href="https://plotly.com/r/"),
+  br(),
+  a("Shiny", href="https://shiny.rstudio.com/"), 
   ),
   mainPanel(
     plotlyOutput(outputId = "balkenDiagramm"),
