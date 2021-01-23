@@ -1,6 +1,5 @@
 library(plotly)
 library(shiny)
-library(plyr)
 
 # Datenquelle: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum
 rkiDaten <- read.csv("./data/RKI_COVID19-20210120.csv", stringsAsFactors = FALSE)
