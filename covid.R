@@ -16,7 +16,7 @@ bundesLaender <- aggregate(rkiDaten$AnzahlFall, list(Bundesland = rkiDaten$Bunde
 laenderAuswahl <- bundesLaender[1]
 
 ui <- fluidPage(
-  # Layout mit Sidebar: https://github.com/rstudio-education/shiny.rstudio.com-tutorial/blob/master/part-1-code/app.R
+  # Layout mit Sidebar. Quelle: https://github.com/rstudio-education/shiny.rstudio.com-tutorial/blob/master/part-1-code/app.R
   headerPanel('Covid Fälle nach Bundesland'),
   sidebarPanel(
   # Dropdown zum Ausawehlen der Bundeslaender. Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
@@ -27,18 +27,18 @@ ui <- fluidPage(
     multiple = TRUE
   ),
   # Slider zur Auswahl des Zeitraums
-  # Quelle: https://shiny.rstudio.com/articles/sliders.html
-  # Quelle: https://stackoverflow.com/questions/40908808/how-to-sliderinput-for-dates
+  # Slider. Quelle: https://shiny.rstudio.com/articles/sliders.html
+  # Datumsangaben in Slider. Quelle: https://stackoverflow.com/questions/40908808/how-to-sliderinput-for-dates
   sliderInput("zeitraum",
               "Zeitraum:",
               min = as.Date("2020-01-02","%Y-%m-%d"),
               max = as.Date("2021-01-19","%Y-%m-%d"),
               value=c(as.Date("2020-01-01"),as.Date("2021-01-19")),
               timeFormat="%Y-%m-%d"),
-  # Radio Buttons zur Auswahl von Datentyp: https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
+  # Radio Buttons zur Auswahl von Datentyp. Quelle: https://shiny.rstudio.com/reference/shiny/latest/radioButtons.html
   radioButtons("datentyp", "Datentyp:",
                c("Relativ" = "relativ","Absolut" = "absolut")),
-  h4("Quellen"), # HTML tags in shiny: https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/
+  h4("Quellen"), # HTML tags in shiny. Quelle: https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/
   h5("Datenquellen"),
   a("Daten des RKI zu Covid-Neuerkrankungen (Stand 21.01.2021)", href="https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0/data?orderBy=Meldedatum"), # HTML link in shiny: https://stackoverflow.com/questions/42047422/create-url-hyperlink-in-r-shiny
   br(),
@@ -49,7 +49,7 @@ ui <- fluidPage(
   a("Shiny", href="https://shiny.rstudio.com/"), 
   ),
   mainPanel(
-    plotlyOutput(outputId = "balkenDiagramm"),
+    plotlyOutput(outputId = "balkenDiagramm"), # plotlyOutput Funktion. Quelle: https://plotly-r.com/linking-views-with-shiny.html
     plotlyOutput(outputId = "linienDiagramm")
   )
 )
@@ -57,7 +57,7 @@ ui <- fluidPage(
 server <- function(input, output, session, ...) {
   output$balkenDiagramm <- renderPlotly({
     # Nach gewaehltem Zeitraum filtern
-    # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
+    # Filtern. Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
     # Aggregieren nach gewaehlten Bundeslaendern
     bl <- aggregate(faelleImZeitraum$x, list(Bundesland = faelleImZeitraum$Bundesland), sum)
@@ -71,7 +71,7 @@ server <- function(input, output, session, ...) {
     }
     yTitle <- "Gesamtanzahl der Fälle"
     fallZahlen <- gefilterteDaten$x
-    # Concatenate Strings Quelle: https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
+    # Concatenate Strings. Quelle: https://www.math.ucla.edu/~anderson/rw1001/library/base/html/paste.html
     diagrammTitle <- paste("Kumulierte Covid Neuerkrankungen nach Bundesland von", as.Date(input$zeitraum[1], "%Y-%m-%d"), "bis", as.Date(input$zeitraum[2], "%Y-%m-%d"))
     if(input$datentyp == "relativ") {
       yTitle <- "Fälle pro 100.000 Einwohner"
@@ -83,12 +83,12 @@ server <- function(input, output, session, ...) {
   })
   output$linienDiagramm <- renderPlotly({
     # Nach gewaehltem Zeitraum filtern
-    # Filtern Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
+    # Filtern. Quelle: https://plotly-r.com/linking-views-with-shiny.html 17.1.2
     faelleImZeitraum <- filter(faelleNachDatumUndLand, Meldedatum>=as.Date(input$zeitraum[1]) & Meldedatum<=input$zeitraum[2])
     # Aggregieren nach gewaehlten Bundeslaendern
     gefilterteFallzahlen <- filter(faelleImZeitraum, Bundesland %in% input$bl) 
     gefilterteEinwohner <- filter(einwohnerZahlen, Bundesland %in% input$bl)
-    # https://stackoverflow.com/questions/14102498/merge-dataframes-different-lengths
+    # Dataframes unterschiedlicher Länge zusammenführen. Quelle: https://stackoverflow.com/questions/14102498/merge-dataframes-different-lengths
     gefilterteEinwohner$variable <- rownames(gefilterteEinwohner)
     gefilterteDaten <- merge(gefilterteFallzahlen, gefilterteEinwohner)
     if (identical(input$bl, NULL)) {
@@ -103,7 +103,7 @@ server <- function(input, output, session, ...) {
       fallZahlen <- (gefilterteDaten$x/gefilterteDaten$Einwohner)*100000
     }
     
-    # Quelle: https://plotly.com/r/line-charts/ Density Plot
+    # Liniendiagramm. Quelle: https://plotly.com/r/line-charts/ Density Plot
     fig <- plot_ly(gefilterteDaten, x=gefilterteDaten$Meldedatum,y=fallZahlen, color = gefilterteDaten$Bundesland) 
     fig <- fig %>% add_lines()
     
